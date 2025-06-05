@@ -6,6 +6,10 @@ from .logger import setup_logger
 app = FastAPI()
 logger = setup_logger()
 
+@app.get("/")
+def root():
+    return {"message": "API is live"}
+
 class AgentRequest(BaseModel):
     token_address: str
     chain_id: int
