@@ -1,0 +1,12 @@
+fastapi==0.109.0
+uvicorn==0.27.0
+langchain==0.1.0
+chromadb==0.4.22
+psycopg2-binary==2.9.9
+web3==6.15.1
+pydantic==2.5.3
+python-dotenv==1.0.0
+tweepy==4.14.0
+discord.py==2.3.2
+PyPDF2==3.0.1
+transformers==4.40.0
