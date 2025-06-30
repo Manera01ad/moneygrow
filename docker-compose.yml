@@ -1,0 +1,77 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: moneygrow
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: moneygrow
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://moneygrow:password@postgres/moneygrow
+      - REDIS_URL=redis://redis:6379/0
+      - ETHERSCAN_API_KEY=${ETHERSCAN_API_KEY}
+      - BSCSCAN_API_KEY=${BSCSCAN_API_KEY}
+      - ETH_RPC=${ETH_RPC}
+      - BSC_RPC=${BSC_RPC}
+      - POLYGON_RPC=${POLYGON_RPC}
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: celery -A src.tasks.workers.celery_app worker --loglevel=info
+    depends_on:
+      - redis
+      - postgres
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://moneygrow:password@postgres/moneygrow
+      - REDIS_URL=redis://redis:6379/0
+      - ETHERSCAN_API_KEY=${ETHERSCAN_API_KEY}
+      - BSCSCAN_API_KEY=${BSCSCAN_API_KEY}
+      - ETH_RPC=${ETH_RPC}
+      - BSC_RPC=${BSC_RPC}
+      - POLYGON_RPC=${POLYGON_RPC}
+
+  flower:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: celery -A src.tasks.workers.celery_app flower
+    ports:
+      - "5555:5555"
+    depends_on:
+      - worker
+      - redis
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - ETHERSCAN_API_KEY=${ETHERSCAN_API_KEY}
+      - BSCSCAN_API_KEY=${BSCSCAN_API_KEY}
+      - ETH_RPC=${ETH_RPC}
+      - BSC_RPC=${BSC_RPC}
+      - POLYGON_RPC=${POLYGON_RPC}
+
+volumes:
+  postgres_data:
+  redis_data:
